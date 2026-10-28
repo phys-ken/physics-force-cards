@@ -1,0 +1,6 @@
+# 公開しないもの（作業用・手順書）
+PROMPT_*.md
+README_*.md
+update_github_urls.py
+~$*.xlsx
+__pycache__/
