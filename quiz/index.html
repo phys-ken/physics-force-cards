@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物理基礎｜力のカードゲーム 演習（Web版）</title>
+  <!-- このファイルは tools/build_static_site.js が組み立てる。直接編集しない。 -->
+  <style>
+
+    :root {
+      --bg: #FFFFFF;
+      --bg-subtle: #F4F6F8;
+      --ink: #1A1A1C;
+      --ink-sub: #4D5358;
+      --ink-muted: #6E767D;
+      --rule: #D8DCE0;
+      --rule-strong: #9EA6B0;
+      --rule-dark: #1A1A1C;
+      --accent: #004198;
+      --accent-hover: #003073;
+      --accent-tint: #EDF3FA;
+      --correct: #0E6245;
+      --correct-bg: #F2FAF6;
+      --correct-border: #86EFAC;
+      --wrong: #B91C1C;
+      --wrong-bg: #FEF2F2;
+      --wrong-border: #FCA5A5;
+      --radius: 3px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ── Global Header (Public / Textbook Minimal Style) ── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: #FFFFFF;
+      border-top: 3px solid var(--accent);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .header-inner {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 9px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .brand-subject {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+
+    .brand-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.8rem;
+    }
+
+    .sync-status {
+      color: var(--ink-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .sync-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--correct);
+    }
+    .sync-indicator.syncing {
+      background: #D97706;
+    }
+    .sync-indicator.pending {
+      background: var(--accent);
+    }
+
+    .account-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--ink);
+      padding: 4px 8px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--bg-subtle);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .account-link:hover {
+      border-color: var(--rule-strong);
+    }
+    .account-link-edit {
+      color: var(--accent);
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 460px) {
+      .header-inner {
+        padding: 8px 12px;
+        gap: 6px;
+      }
+      .brand {
+        gap: 6px;
+      }
+      .brand-title {
+        font-size: 0.88rem;
+      }
+      .header-right {
+        gap: 8px;
+      }
+      .account-link {
+        font-size: 0.78rem;
+        padding: 3px 7px;
+      }
+    }
+
+    /* ── Teacher View Switcher Bar ── */
+    .role-bar {
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--rule);
+    }
+    .role-bar-inner {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      gap: 20px;
+    }
+    .role-tab {
+      padding: 8px 4px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--ink-sub);
+      border-bottom: 2px solid transparent;
+    }
+    .role-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Main Container ── */
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 20px 16px 56px;
+    }
+
+    /* ── Home Top Status Bar (Flat Hairline Grid, No Cards) ── */
+    .home-lead {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .home-user-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .home-user-note {
+      font-size: 0.8rem;
+      color: var(--ink-sub);
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--rule-dark);
+      border-bottom: 1px solid var(--rule);
+      background: var(--bg-subtle);
+      margin-bottom: 28px;
+    }
+
+    .summary-cell {
+      padding: 10px 12px;
+      border-right: 1px solid var(--rule);
+    }
+    .summary-cell:last-child {
+      border-right: none;
+    }
+    .summary-label {
+      font-size: 0.72rem;
+      color: var(--ink-sub);
+      margin-bottom: 2px;
+    }
+    .summary-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Section Headings ── */
+    .sec-heading {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--ink);
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--ink);
+      margin: 28px 0 0;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .sec-heading-note {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--ink-sub);
+    }
+
+    /* ── Course Rows (Structured List with 1px Dividers) ── */
+    .course-list {
+      border-top: 2px solid var(--ink);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .course-row {
+      padding: 12px 0;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .course-row:first-child {
+      border-top: none;
+    }
+
+    .course-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .course-header-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .course-code {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-tint);
+      padding: 1px 6px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .course-title {
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .status-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 2px;
+      border: 1px solid var(--rule);
+      color: var(--ink-sub);
+    }
+    .status-tag.perfect {
+      color: var(--correct);
+      border-color: var(--correct);
+      background: var(--correct-bg);
+    }
+    .status-tag.active {
+      color: var(--accent);
+      border-color: #93C5FD;
+      background: var(--accent-tint);
+    }
+
+    .course-progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .linear-meter {
+      width: 84px;
+      height: 4px;
+      background: #E2E6EA;
+      overflow: hidden;
+    }
+    .linear-meter-fill {
+      height: 100%;
+      background: var(--accent);
+    }
+    .linear-meter-fill.perfect {
+      background: var(--correct);
+    }
+
+    .course-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Buttons (Rectangular 3px Radius, DADS Standard) ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .btn-primary:disabled {
+      background: #9EA6B0;
+      border-color: #9EA6B0;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #FFFFFF;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--accent-tint);
+    }
+    .btn-secondary:disabled {
+      color: var(--ink-muted);
+      border-color: var(--rule);
+      background: var(--bg-subtle);
+      cursor: not-allowed;
+    }
+
+    .btn-neutral {
+      background: #FFFFFF;
+      color: var(--ink);
+      border-color: var(--rule-strong);
+    }
+    .btn-neutral:hover {
+      background: var(--bg-subtle);
+    }
+
+    /* ── Quiz View (CBT / Exam Layout, Individual Card Images in Choices) ── */
+    .quiz-container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 10px 14px 24px;
+    }
+
+    .quiz-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 10px;
+      font-size: 0.8rem;
+    }
+
+    .quiz-step-num {
+      font-size: 0.92rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .quiz-meta-text {
+      color: var(--ink-sub);
+      font-size: 0.76rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 55%;
+    }
+
+    .quiz-abort-link {
+      font-size: 0.78rem;
+      color: var(--ink-sub);
+      text-decoration: underline;
+    }
+
+    .quiz-statement {
+      border-left: 3px solid var(--accent);
+      padding: 2px 0 2px 10px;
+      margin-bottom: 12px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.48;
+      color: var(--ink);
+      white-space: pre-line;
+    }
+
+    /* 単体図表示（Lv.1-A 図→名称） */
+    .single-figure-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 6px 0 12px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 12px;
+    }
+    .single-figure-wrap img {
+      max-height: 210px;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* 2力比較表示（Lv.4 力A・力Bの関係判定 — 個別カード2枚を横並び） */
+    .pair-figure-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .pair-figure-cell {
+      border: 1px solid var(--rule-strong);
+      background: #FFFFFF;
+    }
+    .pair-figure-head {
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--rule);
+      padding: 3px 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .pair-figure-body {
+      padding: 6px;
+      height: 165px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pair-figure-body img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* 問題文の基準力図表示（Lv.2 つりあい・Lv.3 作用反作用） */
+    .prompt-ref-wrap {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .prompt-ref-single {
+      max-width: 280px;
+      margin: 0 auto;
+      border: 1px solid var(--rule-strong);
+      background: #FFFFFF;
+    }
+    .prompt-ref-single .pair-figure-body {
+      height: 145px;
+    }
+    .choices-section-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--ink-sub);
+      margin-bottom: 6px;
+    }
+
+    /* ── 4択 図選択肢グリッド（個別カード画像を各ボタン内に直接表示） ── */
+    .choices-image-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice-card-btn {
+      display: flex;
+      flex-direction: column;
+      border: 1.5px solid var(--rule-strong);
+      border-radius: var(--radius);
+      background: #FFFFFF;
+      overflow: hidden;
+      text-align: left;
+      transition: border-color 0.12s, background-color 0.12s;
+    }
+
+    .choice-card-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    .choice-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 8px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--rule);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .choice-card-body {
+      padding: 6px;
+      height: 175px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFFFFF;
+    }
+
+    @media (min-width: 540px) {
+      .choice-card-body {
+        height: 205px;
+      }
+    }
+
+    .choice-card-body img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ── テキスト選択肢リスト（Lv.1-A / Lv.4 関係判定） ── */
+    .choices-text-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .choice-text-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 12px;
+      border: 1.5px solid var(--rule-strong);
+      border-radius: var(--radius);
+      background: #FFFFFF;
+      text-align: left;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--ink);
+      transition: border-color 0.12s, background-color 0.12s;
+    }
+
+    .choice-text-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--accent-tint);
+    }
+
+    .choice-index-box {
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* 正誤確定時のハイライト */
+    .choice-card-btn.is-correct,
+    .choice-text-btn.is-correct {
+      border-color: var(--correct);
+      border-width: 2px;
+      background: var(--correct-bg);
+    }
+    .choice-card-btn.is-correct .choice-card-head {
+      background: var(--correct);
+      color: #FFFFFF;
+      border-bottom-color: var(--correct);
+    }
+
+    .choice-card-btn.is-wrong,
+    .choice-text-btn.is-wrong {
+      border-color: var(--wrong);
+      border-width: 2px;
+      background: var(--wrong-bg);
+    }
+    .choice-card-btn.is-wrong .choice-card-head {
+      background: var(--wrong);
+      color: #FFFFFF;
+      border-bottom-color: var(--wrong);
+    }
+
+    /* ── 回答直後のインライン解説バー ── */
+    .feedback-bar {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-left: 4px solid var(--ink);
+      background: var(--bg-subtle);
+    }
+    .feedback-bar.correct {
+      border-left-color: var(--correct);
+      background: var(--correct-bg);
+    }
+    .feedback-bar.wrong {
+      border-left-color: var(--wrong);
+      background: var(--wrong-bg);
+    }
+
+    .feedback-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .feedback-verdict {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+    .feedback-bar.correct .feedback-verdict {
+      color: var(--correct);
+    }
+    .feedback-bar.wrong .feedback-verdict {
+      color: var(--wrong);
+    }
+
+    .feedback-exp {
+      font-size: 0.8rem;
+      color: var(--ink);
+      line-height: 1.45;
+      white-space: pre-line;
+      margin-bottom: 8px;
+    }
+
+    /* ── Result View ── */
+    .result-header-block {
+      border-top: 2px solid var(--ink);
+      border-bottom: 1px solid var(--rule);
+      padding: 18px 0;
+      margin-bottom: 20px;
+    }
+
+    .result-score-line {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin: 6px 0 8px;
+    }
+
+    .result-score-num {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .review-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .review-table tr {
+      border-bottom: 1px solid var(--rule);
+    }
+    .review-table td {
+      padding: 10px 6px;
+      vertical-align: top;
+    }
+
+    /* ── Teacher Analytics Dashboard (DADS Table Standard: Horizontal Rules Only) ── */
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 16px;
+    }
+
+    .dash-subtabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 10px;
+    }
+
+    .dash-tab-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: #FFFFFF;
+      color: var(--ink-sub);
+    }
+    .dash-tab-btn.active {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table.dads-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    table.dads-table th {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1.5px solid var(--ink);
+      color: var(--ink-sub);
+      font-weight: 700;
+      white-space: nowrap;
+      background: var(--bg-subtle);
+    }
+
+    table.dads-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--rule);
+      white-space: nowrap;
+    }
+
+    table.dads-table th.num,
+    table.dads-table td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dist-bar {
+      display: flex;
+      width: 160px;
+      height: 14px;
+      background: var(--bg-subtle);
+      overflow: hidden;
+    }
+    .dist-seg {
+      height: 100%;
+    }
+
+    .chart-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      padding: 4px 0;
+    }
+    .chart-label {
+      width: 84px;
+      text-align: right;
+      color: var(--ink-sub);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .chart-track {
+      flex: 1;
+      height: 12px;
+      background: var(--bg-subtle);
+    }
+    .chart-fill {
+      height: 100%;
+      background: var(--accent);
+    }
+    .chart-val {
+      width: 80px;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    /* ── Dialog / Modal ── */
+    dialog.modal-box {
+      margin: auto;
+      border: 1px solid var(--rule-strong);
+      border-top: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      width: min(92vw, 420px);
+      background: #FFFFFF;
+    }
+    dialog.modal-box::backdrop {
+      background: rgba(26, 26, 28, 0.45);
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .modal-body-text {
+      font-size: 0.83rem;
+      color: var(--ink-sub);
+      margin-bottom: 14px;
+    }
+    .text-input {
+      width: 100%;
+      padding: 9px 10px;
+      font-size: 0.92rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+    }
+    .text-input:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ── Teacher Full-Browse (全問題プレビュー & 全生徒詳細) ── */
+    .filter-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--rule);
+      margin-bottom: 16px;
+    }
+
+    .mode-pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mode-filter-btn {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius);
+      background: #FFFFFF;
+      color: var(--ink);
+    }
+    .mode-filter-btn.active {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+
+    .preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .preview-item {
+      border: 1px solid var(--rule-strong);
+      background: #FFFFFF;
+    }
+
+    .preview-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 7px 12px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--rule);
+      font-size: 0.8rem;
+    }
+
+    .preview-item-body {
+      padding: 12px 14px;
+    }
+
+    .preview-exp-box {
+      margin-top: 12px;
+      padding: 8px 10px;
+      background: var(--bg-subtle);
+      border-left: 3px solid var(--correct);
+      font-size: 0.79rem;
+      color: var(--ink);
+      white-space: pre-line;
+    }
+
+    .qid-chip {
+      display: inline-block;
+      padding: 1px 6px;
+      margin: 1px 3px 1px 0;
+      font-size: 0.74rem;
+      font-weight: 700;
+      border: 1px solid var(--rule-strong);
+      border-radius: 2px;
+      background: #FFFFFF;
+      color: var(--accent);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .qid-chip.weak {
+      color: var(--wrong);
+      border-color: var(--wrong-border);
+      background: var(--wrong-bg);
+    }
+
+    .student-detail-box {
+      border: 2px solid var(--accent);
+      background: #FFFFFF;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Boot & Standalone Welcome Gate (ニックネーム登録前に他画面を一切出さない専用ゲート) ── */
+    .boot-screen {
+      max-width: 420px;
+      margin: 80px auto;
+      padding: 24px 20px;
+      text-align: center;
+      color: var(--ink-sub);
+      font-size: 0.88rem;
+    }
+
+    .welcome-gate-wrap {
+      max-width: 480px;
+      margin: 36px auto;
+      padding: 0 16px;
+    }
+
+    .welcome-gate-card {
+      border: 1px solid var(--rule-strong);
+      border-top: 4px solid var(--accent);
+      background: #FFFFFF;
+      padding: 24px 22px;
+    }
+
+    .welcome-subject-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-tint);
+      border: 1px solid #93C5FD;
+      padding: 2px 8px;
+      margin-bottom: 10px;
+    }
+
+    .welcome-skip-box {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rule);
+      font-size: 0.78rem;
+      color: var(--ink-sub);
+    }
+
+    .eng-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 2px;
+      border: 1px solid var(--rule-strong);
+      white-space: nowrap;
+    }
+    .eng-badge.unregistered {
+      color: var(--wrong);
+      border-color: var(--wrong-border);
+      background: var(--wrong-bg);
+    }
+    .eng-badge.opened_only,
+    .eng-badge.dropped_only {
+      color: var(--warn);
+      border-color: #FCD34D;
+      background: var(--warn-bg);
+    }
+    .eng-badge.active {
+      color: var(--accent);
+      border-color: #93C5FD;
+      background: var(--accent-tint);
+    }
+    .eng-badge.perfect {
+      color: var(--correct);
+      border-color: var(--correct-border);
+      background: var(--correct-bg);
+    }
+  
+
+    /* ── ここから静的サイト（GitHub Pages 版）だけの追加分 ── */
+    .static-note {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      margin-top: 8px;
+    }
+
+    .name-strip {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--bg-subtle);
+      font-size: 0.86rem;
+    }
+
+    .name-strip strong {
+      flex: 1;
+    }
+
+    .timer-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--ink-sub);
+    }
+
+    .timer-track {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .timer-fill {
+      height: 100%;
+      width: 100%;
+      background: var(--accent);
+    }
+
+    .timer-fill.low {
+      background: var(--wrong);
+    }
+
+    .record-block {
+      margin: 18px 0 8px;
+      padding: 12px;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius);
+    }
+
+    .record-block img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--rule);
+      margin: 10px 0;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header" id="app-header">
+    <div class="header-inner">
+      <div class="brand" onclick="app.goHome()">
+        <span class="brand-subject">物理基礎</span>
+        <span class="brand-title">力のカードゲーム 演習</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── ニックネーム入力 ── -->
+  <main class="welcome-gate-wrap hidden" id="view-welcome">
+    <div class="welcome-gate-card">
+      <h1 style="font-size:1.15rem; font-weight:700; margin-bottom:14px; color:var(--ink);">ニックネーム</h1>
+      <form onsubmit="app.submitNickname(event)">
+        <label for="welcome-nickname-input" style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">
+          回答記録に載る名前です
+        </label>
+        <input
+          type="text"
+          class="text-input"
+          id="welcome-nickname-input"
+          placeholder="ニックネームを入力"
+          maxlength="20"
+          required
+        />
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:10px; font-size:0.88rem;">
+          決定
+        </button>
+      </form>
+      <div class="static-note">この Web 版は記録をサーバーに送りません。解き終わったら回答記録の画像を保存して提出してください。</div>
+    </div>
+  </main>
+
+  <!-- ── ホーム（コース一覧） ── -->
+  <main class="container hidden" id="view-home">
+    <div class="name-strip">
+      <span>ニックネーム</span>
+      <strong id="home-nickname">-</strong>
+      <button type="button" class="btn btn-neutral" onclick="app.editNickname()">変更</button>
+    </div>
+    <div class="course-list" id="all-stages-container"></div>
+    <div class="static-note">1問の制限時間は20秒です。時間切れは不正解になります。</div>
+  </main>
+
+  <!-- ── 問題演習画面 ── -->
+  <main class="quiz-container hidden" id="view-quiz">
+    <div class="quiz-header-row">
+      <span class="quiz-step-num" id="quiz-progress-label">1 / 10</span>
+      <button class="quiz-abort-link" onclick="app.quitQuiz()">一覧へ戻る</button>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-track"><div class="timer-fill" id="quiz-timer-fill"></div></div>
+      <span id="quiz-timer-text">20秒</span>
+    </div>
+
+    <div class="quiz-statement" id="quiz-question-text"></div>
+
+    <div class="feedback-bar hidden" id="quiz-feedback-banner">
+      <div class="feedback-top">
+        <span class="feedback-verdict" id="feedback-status-text">正解</span>
+        <button class="btn btn-primary" id="next-question-btn" onclick="app.nextQuestion()">次へ</button>
+      </div>
+      <div class="feedback-exp" id="feedback-explanation-text"></div>
+    </div>
+
+    <div id="quiz-prompt-figure-area"></div>
+    <div id="quiz-choices-container"></div>
+  </main>
+
+  <!-- ── 結果画面 ── -->
+  <main class="container hidden" id="view-result">
+    <div class="result-header-block">
+      <div style="font-size:0.82rem; color:var(--ink-sub); font-weight:700;" id="result-mode-title"></div>
+      <div class="result-score-line">
+        <span class="result-score-num" id="result-score-text">10 / 10</span>
+        <span id="result-badge-area"></span>
+      </div>
+      <div class="result-actions-row" id="result-actions-area"></div>
+    </div>
+
+    <div class="record-block">
+      <div class="sec-heading" style="margin:0;"><span>回答記録（提出用画像）</span></div>
+      <img id="record-image" alt="回答記録の画像" />
+      <div class="record-actions">
+        <a class="btn btn-primary" id="record-download-link" href="#" download="回答記録.png">画像を保存</a>
+      </div>
+      <div class="static-note">保存できないときは、画像を長押しして保存するか、この画面のスクリーンショットを撮ってください。</div>
+    </div>
+
+    <div class="sec-heading" style="margin-top:10px;">
+      <span>解答・解説</span>
+    </div>
+    <table class="review-table" id="result-review-list"></table>
+  </main>
+
+  <canvas id="record-canvas" class="hidden"></canvas>
+
+  <script src="vendor/qrcode.js"></script>
+  <script src="vendor/qrcode_UTF8.js"></script>
+  <script src="questions_data.js"></script>
+  <script src="record.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

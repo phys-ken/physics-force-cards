@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>回答記録の確認（先生用）｜力のカードゲーム</title>
+  <style>
+    body {
+      font-family: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
+      color: #1A1A1C;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+    main { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 1.25rem; margin: 0 0 6px; }
+    h2 { font-size: 1rem; margin: 26px 0 8px; border-bottom: 2px solid #1A1A1C; padding-bottom: 4px; }
+    .note { color: #4D5358; font-size: 0.86rem; }
+    .drop {
+      border: 2px dashed #9EA6B0;
+      padding: 18px;
+      text-align: center;
+      margin: 12px 0;
+      border-radius: 3px;
+    }
+    table { border-collapse: collapse; width: 100%; font-size: 0.84rem; }
+    th, td { border: 1px solid #D8DCE0; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #F4F6F8; }
+    .ok { color: #0E6245; font-weight: 700; }
+    .ng { color: #B91C1C; font-weight: 700; }
+    .warn { color: #9A5B00; font-weight: 700; }
+    textarea { width: 100%; height: 150px; font-family: monospace; font-size: 0.8rem; box-sizing: border-box; }
+    button { font: inherit; padding: 6px 14px; cursor: pointer; }
+    code { background: #F4F6F8; padding: 0 4px; }
+    pre { background: #F4F6F8; padding: 10px; font-size: 0.8rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>回答記録の確認（先生用）</h1>
+  <div class="note">生徒が提出した「回答記録」の画像を読み込むと、2つのQRコードを照合して本物かどうかを判定します。画像はこのブラウザの中だけで処理し、どこにも送りません。</div>
+
+  <h2>1. 画像から確認する</h2>
+  <div class="drop">
+    <input type="file" id="file-input" accept="image/*" multiple />
+    <div class="note">複数の画像をまとめて選べます。まとめて読み込むと、同じ記録が2回以上提出されていないかも確認します。</div>
+  </div>
+  <div id="summary" class="note"></div>
+  <table id="result-table" hidden>
+    <thead>
+      <tr>
+        <th>画像</th><th>判定</th><th>ニックネーム</th><th>コース</th><th>得点</th><th>回答日時</th><th>記録ID</th><th>理由・注意</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>2. QRの中身を貼り付けて確認する</h2>
+  <div class="note">QRを別のアプリで読み取った場合は、その文字列をそれぞれ貼り付けてください。</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
+    <div><div>① 記録データ</div><textarea id="paste-record"></textarea></div>
+    <div><div>② 照合コード</div><textarea id="paste-check"></textarea></div>
+  </div>
+  <button type="button" id="paste-verify-btn" style="margin-top:8px;">照合する</button>
+  <pre id="paste-result" hidden></pre>
+
+  <h2>判定のしかた</h2>
+  <div class="note">
+    <p>① 記録データのQRには、ニックネーム・コース・日時・得点・各問題の結果と、<code>salt=</code>（ソルト）が入っています。② 照合コードのQRには、同じ記録ID と <code>sha256=</code> が入っています。</p>
+    <p><code>sha256</code> が「ソルト ＋ 改行 ＋ ①の1行目から最後の q 行まで」の SHA-256 と一致し、記録IDが①と②で同じなら「本物」と判定します。①の中身（得点や名前）を書き換えると、②と一致しなくなります。</p>
+    <p>画像の文字（得点・名前など）を書き換えた場合はQRと食い違うので、判定表の値と画像の文字を見比べてください。同じ記録IDの画像が複数ある場合は、他人の記録の使い回しが疑われます。</p>
+  </div>
+</main>
+
+<script src="vendor/jsQR.js"></script>
+<script src="record.js"></script>
+<script src="verify.js"></script>
+</body>
+</html>
